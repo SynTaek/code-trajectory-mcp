@@ -122,26 +122,26 @@ As an agent, you should follow this loop to maintain high-quality context:
     *   *Why?* This intent is attached to every auto-snapshot until you change it or restart the server. It makes the history readable and semantic.
 2.  **Work:** Perform your file edits (write_to_file, etc.).
     *   *Behind the scenes:* The server watches your edits and creates `[AUTO-TRJ]` snapshots in the shadow repo.
-3.  **Checkpoint:** When the task is complete (or you reach a stable state), call `checkpoint("Completed Login Implementation")`.
+3.  **Consolidate:** When the task is complete (or you reach a stable state), call `consolidate("Completed Login Implementation")`.
     *   *Effect:* This squashes all the noisy `[AUTO-TRJ]` snapshots into a single, clean commit with your message.
     *   *Benefit:* It keeps the history clean while preserving the "thought process" during the work phase.
-    *   **⚠️ Best Practice:** Only checkpoint when you are **DONE** with a feature. If you checkpoint while still debugging, you lose the detailed history of what you tried and failed.
-    *   **Note:** Checkpointing does NOT create a commit in your main project's git history. It only organizes the shadow history.
+    *   **⚠️ Best Practice:** Only consolidate when you are **DONE** with a feature. If you consolidate while still debugging, you lose the detailed history of what you tried and failed.
+    *   **Note:** Consolidation does NOT create a commit in your main project's git history. It only organizes the shadow history.
 
 ### 3. Context Retrieval Tools
 Use these tools to understand the codebase before making changes:
 
 *   **`get_session_summary()`**: Call this first when entering a session. It tells you what happened recently.
 *   **`get_file_trajectory(filepath)`**: Call this before editing a complex file. It shows you *how* the file evolved, not just its current state.
-*   **`get_global_trajectory(limit=20, since_checkpoint=False)`**: Call this to see if your changes are causing ripple effects in other files. Use `since_checkpoint=True` to see all changes since your last checkpoint.
+*   **`get_global_trajectory(limit=20, since_consolidate=False)`**: Call this to see if your changes are causing ripple effects in other files. Use `since_consolidate=True` to see all changes since your last consolidation.
 
 ## 🗺️ Workflow Example
 
 1.  **Agent:** `set_trajectory_intent("Refactoring auth logic")`
 2.  **Agent:** Edits `auth.py` (Save 1) -> *Server creates [AUTO-TRJ] snapshot*
 3.  **Agent:** Edits `user.py` (Save 2) -> *Server creates [AUTO-TRJ] snapshot*
-4.  **Agent:** `checkpoint("Refactored auth logic to use JWT")`
-    *   *Server:* Squashes snapshots -> Creates `[CHECKPOINT] Refactored auth logic to use JWT` commit.
+4.  **Agent:** `consolidate("Refactored auth logic to use JWT")`
+    *   *Server:* Squashes snapshots -> Creates `[CONSOLIDATE] Refactored auth logic to use JWT` commit.
 
 ## 📊 Viewing Trajectory History
 

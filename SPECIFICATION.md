@@ -43,17 +43,17 @@ The **Code Trajectory MCP System** acts as a bridge between a developer's local 
 * **Output:** Markdown formatted string containing timestamps, commit messages, and semantic diffs.
 
 ### 3.2. Tool: `get_global_trajectory`
-**Goal:** Provide the broader context of the project (multi-file dependencies).
 
-* **Input:**
-    * `limit` (integer, optional, default=20): Maximum number of recent snapshots to retrieve.
-    * `since_checkpoint` (boolean, optional, default=False): If True, retrieves all commits since the last checkpoint.
-* **Processing:**
-    * If `since_checkpoint` is True: Iterate backwards until a `[CHECKPOINT]` commit is found. Return all commits after it.
-    * Else: Return the last `limit` commits.
-    * Group changes by file.
-    * Summarize the "Flow": e.g., "Modified `UserDTO` -> Modified `UserService` -> Modified `UserController`".
-* **Output:** A summary report showing the ripple effect of recent changes.
+*   **Purpose:** Retrieve the recent history of the entire project to understand broader context and detect ripple effects.
+*   **Input:**
+    *   `limit` (int, default=20): Maximum number of commits to retrieve.
+    *   `since_consolidate` (bool, default=False): If True, retrieves all commits since the last `[CONSOLIDATE]` commit.
+*   **Processing:**
+    *   Iterate through the git log of the shadow repo.
+    *   If `since_consolidate` is True, stop when a commit message starting with `[CONSOLIDATE]` is found.
+    *   Otherwise, stop after `limit` commits.
+    *   Format the output as a chronological list of changes (Timestamp, Message, Files Changed).
+*   **Output:** Markdown-formatted summary of global activity.
 
 ### 3.3. Tool: `get_session_summary`
 **Goal:** Handle context switching.
@@ -62,15 +62,20 @@ The **Code Trajectory MCP System** acts as a bridge between a developer's local 
     * Identify the "gap" in commit times. If the last commit was > 1 hour ago, treat the current interaction as a "New Session".
     * Provide a summary of the *last* session's final state and intent.
 
-### 3.4. Tool: `checkpoint`
-**Goal:** Maintain repository hygiene and consolidate work.
-
-* **Input:**
-    * `intent` (string, required): Description of the work done (e.g., "Implemented login feature").
-* **Function:**
-    * Identifies contiguous `[AUTO-TRJ]` commits (including root commits if applicable).
-    * Squashes them into a single commit with the prefix `[CHECKPOINT]` and the provided intent.
     * **Constraint:** Requires server to be configured via `configure_project`.
+
+### 3.4. Tool: `consolidate`
+
+*   **Purpose:** Squash recent `[AUTO-TRJ]` snapshots into a single, meaningful commit to clean up history.
+*   **Input:**
+    *   `intent` (string): A summary of the work accomplished (e.g., "Implemented Login Feature").
+*   **Processing:**
+    *   Identify the sequence of recent `[AUTO-TRJ]` commits.
+    *   Perform a soft reset to the commit before the first `[AUTO-TRJ]` in the sequence.
+    *   Create a new commit with the message `[CONSOLIDATE] {Timestamp} - {Intent}`.
+    *   **IMPORTANT:** This operation is performed ONLY on the shadow repository. It does not affect the main project's git history.
+*   **Output:** Success message indicating the number of snapshots squashed.
+*   **Goal:** Maintain repository hygiene and consolidate work.
 
 ### 3.5. Tool: `set_trajectory_intent`
 **Goal:** Capture the "Why" behind the changes.

@@ -53,8 +53,8 @@ def test_intent_persistence(recorder, temp_project_dir):
     assert "Persistent Task" in commits[0].message
     assert "Persistent Task" in commits[1].message
 
-def test_intent_persistence_after_checkpoint(recorder, temp_project_dir):
-    """Test that intent persists even after a checkpoint."""
+def test_intent_persistence_after_consolidation(recorder, temp_project_dir):
+    """Test that intent persists even after a consolidation."""
     recorder.set_intent("Long Running Task")
     test_file = os.path.join(temp_project_dir, "test.txt")
     
@@ -63,8 +63,8 @@ def test_intent_persistence_after_checkpoint(recorder, temp_project_dir):
         f.write("v1")
     recorder.create_snapshot(test_file)
     
-    # 2. Checkpoint
-    recorder.checkpoint("Intermediate Save")
+    # 2. Consolidate
+    recorder.consolidate("Intermediate Save")
     
     # 3. Create another snapshot
     with open(test_file, "w") as f:
@@ -74,12 +74,12 @@ def test_intent_persistence_after_checkpoint(recorder, temp_project_dir):
     # Verify the new snapshot still has the intent
     commits = list(recorder.repo.iter_commits())
     # commits[0] is the new snapshot
-    # commits[1] is the checkpoint
+    # commits[1] is the consolidation
     assert "Long Running Task" in commits[0].message
     assert "[AUTO-TRJ]" in commits[0].message
 
-def test_checkpoint(recorder, temp_project_dir):
-    """Test squashing snapshots into a checkpoint."""
+def test_consolidate(recorder, temp_project_dir):
+    """Test squashing snapshots into a consolidation."""
     test_file = os.path.join(temp_project_dir, "test.py")
 
     # Create 3 snapshots.
@@ -92,13 +92,14 @@ def test_checkpoint(recorder, temp_project_dir):
     commits = recorder.get_history(test_file)
     assert len(commits) == 3
 
-    # Checkpoint.
-    result = recorder.checkpoint("Completed feature")
-    assert "Successfully created checkpoint" in result
+    # Consolidate.
+    result = recorder.consolidate("Completed feature")
+    assert "Successfully consolidated" in result
+    assert "shadow repository (.trajectory) ONLY" in result
 
     # Verify squash.
-    # Note: get_history might return the checkpoint commit now.
+    # Note: get_history might return the consolidation commit now.
     commits = list(recorder.repo.iter_commits())
     assert len(commits) == 1
-    assert "[CHECKPOINT]" in commits[0].message
+    assert "[CONSOLIDATE]" in commits[0].message
     assert "Completed feature" in commits[0].message

@@ -128,19 +128,19 @@ class Recorder:
         commits = list(self.repo.iter_commits(paths=abs_path, max_count=max_count))
         return commits
 
-    def checkpoint(self, intent: str):
-        """Squashes recent [AUTO-TRJ] snapshots and creates a checkpoint commit.
+    def consolidate(self, intent: str):
+        """Squashes recent [AUTO-TRJ] snapshots and creates a consolidate commit.
 
         Args:
-            intent: Description of the checkpoint.
+            intent: Description of the consolidation.
 
         Returns:
-            A status message indicating the result of the checkpoint operation.
+            A status message indicating the result of the consolidate operation.
         """
         try:
             commits = list(self.repo.iter_commits())
             if not commits:
-                return "No commits to checkpoint."
+                return "No commits to consolidate."
 
             # Find how many recent commits are AUTO-TRJ
             auto_trj_count = 0
@@ -164,23 +164,23 @@ class Recorder:
 
             # Check if there are changes to commit.
             if not self.repo.is_dirty() and not self.repo.index.diff("HEAD"):
-                return "No changes to checkpoint."
+                return "No changes to consolidate."
 
             timestamp = datetime.datetime.now().strftime("%H:%M:%S")
-            commit_message = f"[CHECKPOINT] {timestamp} - {intent}"
+            commit_message = f"[CONSOLIDATE] {timestamp} - {intent}"
 
             # Add all files using -A to handle deletions and new files.
             # Also rely on advice.addIgnoredFile=false to avoid errors with .trajectory.
             self.repo.git.add("-A")
             self.repo.git.commit("-m", commit_message)
 
-            logger.info(f"Created checkpoint: {commit_message}")
+            logger.info(f"Created consolidation: {commit_message}")
             return (
-                f"Successfully created checkpoint: '{intent}' (Squashed {auto_trj_count} snapshots).\n"
-                "NOTE: This checkpoint is saved in the shadow repository (.trajectory) ONLY.\n"
+                f"Successfully consolidated: '{intent}' (Squashed {auto_trj_count} snapshots).\n"
+                "NOTE: This consolidation is saved in the shadow repository (.trajectory) ONLY.\n"
                 "You must still commit your changes to the main project git repository separately."
             )
 
         except Exception as e:
-            logger.error(f"Error creating checkpoint: {e}")
-            return f"Error creating checkpoint: {e}"
+            logger.error(f"Error creating consolidation: {e}")
+            return f"Error creating consolidation: {e}"

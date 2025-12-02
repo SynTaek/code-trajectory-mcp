@@ -97,28 +97,29 @@ class Trajectory:
 
         return "\n\n".join(trajectory)
 
-    def get_global_trajectory(self, limit: int = 20, since_checkpoint: bool = False) -> str:
+    def get_global_trajectory(self, limit: int = 20, since_consolidate: bool = False) -> str:
         """Generates a global trajectory summary.
 
         Args:
             limit: Maximum number of commits to retrieve (default: 20).
-            since_checkpoint: If True, retrieves all commits since the last checkpoint.
+            since_consolidate: If True, retrieves all commits since the last consolidation.
                 This overrides the 'limit' argument.
 
         Returns:
             A markdown-formatted summary of global activity.
         """
         try:
-            # Fetch commits. We fetch a bit more than limit if checking for checkpoint,
+            # Fetch commits. We fetch a bit more than limit if checking for consolidation,
             # but for simplicity in this iteration, we'll iterate from HEAD.
-            # If since_checkpoint is True, we need to iterate until we find a checkpoint.
+            # If since_consolidate is True, we need to iterate until we find a consolidation.
             
             commits = []
-            if since_checkpoint:
-                # Iterate commits until we find a checkpoint or hit a reasonable safety limit (e.g. 1000)
+            if since_consolidate:
+                # Iterate commits until we find a consolidation or hit a reasonable safety limit (e.g. 1000)
                 for commit in self.recorder.repo.iter_commits(max_count=1000):
                     message = str(commit.message)
-                    if message.startswith("[CHECKPOINT]"):
+                    if message.startswith("[CONSOLIDATE]") or message.startswith("[CHECKPOINT]"):
+                        # Backward compatibility: also check for [CHECKPOINT]
                         break
                     commits.append(commit)
             else:
@@ -132,8 +133,8 @@ class Trajectory:
             return "No global activity found."
 
         trajectory = []
-        if since_checkpoint:
-            trajectory.append("# Global Trajectory (Since Last Checkpoint)")
+        if since_consolidate:
+            trajectory.append("# Global Trajectory (Since Last Consolidation)")
         else:
             trajectory.append(f"# Global Trajectory (Last {len(commits)} snapshots)")
 

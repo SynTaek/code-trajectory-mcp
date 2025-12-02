@@ -115,7 +115,7 @@ def get_file_trajectory(filepath: str, depth: int = 5) -> str:
 
 
 @mcp.tool()
-def get_global_trajectory(limit: int = 20, since_checkpoint: bool = False) -> str:
+def get_global_trajectory(limit: int = 20, since_consolidate: bool = False) -> str:
     """Retrieves the global trajectory (ripple effect) across the project.
 
     Use this to understand the broader context of recent changes or to detect
@@ -123,7 +123,7 @@ def get_global_trajectory(limit: int = 20, since_checkpoint: bool = False) -> st
 
     Args:
         limit: Maximum number of commits to retrieve (default: 20).
-        since_checkpoint: If True, retrieves all commits since the last checkpoint.
+        since_consolidate: If True, retrieves all commits since the last consolidation.
             This overrides the 'limit' argument.
 
     Returns:
@@ -133,7 +133,7 @@ def get_global_trajectory(limit: int = 20, since_checkpoint: bool = False) -> st
     if error:
         return error
     assert state.trajectory is not None
-    return state.trajectory.get_global_trajectory(limit, since_checkpoint)
+    return state.trajectory.get_global_trajectory(limit, since_consolidate)
 
 
 @mcp.tool()
@@ -154,8 +154,8 @@ def get_session_summary() -> str:
 
 
 @mcp.tool()
-def checkpoint(intent: str) -> str:
-    """Creates a checkpoint of the current state with a descriptive intent.
+def consolidate(intent: str) -> str:
+    """Consolidates recent snapshots into a single commit with a descriptive intent.
 
     Use this after completing a logical unit of work to "save" your progress semantically.
     This squashes recent [AUTO-TRJ] snapshots into a single commit.
@@ -168,13 +168,13 @@ def checkpoint(intent: str) -> str:
         intent: A clear, past-tense description of what was accomplished (e.g., "Refactored auth middleware").
 
     Returns:
-        A success message indicating the checkpoint was created and how many snapshots were squashed.
+        A success message indicating the consolidation was created and how many snapshots were squashed.
     """
     error = _check_configured()
     if error:
         return error
     assert state.recorder is not None
-    return state.recorder.checkpoint(intent)
+    return state.recorder.consolidate(intent)
 
 
 @mcp.tool()

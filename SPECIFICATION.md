@@ -76,8 +76,8 @@ The **Code Trajectory MCP System** acts as a bridge between a developer's local 
 * **Input:**
     * `intent` (string, required): A short description of the current task (e.g., "Fixing bug #123").
 * **Processing:**
-    * Stores the intent in memory with a timestamp.
-    * **TTL:** The intent expires after 5 minutes to prevent stale context from polluting future snapshots.
+    * Stores the intent in memory.
+    * **Persistence:** The intent persists until it is explicitly changed by another `set_trajectory_intent` call or the server is restarted.
 * **Effect:** Subsequent snapshots will include this intent in their commit messages.
 
 ### 3.6. Tool: `configure_project`

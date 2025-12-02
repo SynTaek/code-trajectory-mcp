@@ -14,7 +14,7 @@ class Recorder:
         self.project_root = os.path.abspath(repo_path)
         self.shadow_repo_path = os.path.join(self.project_root, ".trajectory")
         self.current_intent: Optional[str] = None
-        self.intent_timestamp: Optional[datetime.datetime] = None
+        self.current_intent: Optional[str] = None
 
         self._ensure_gitignore()
         self._init_shadow_repo()
@@ -58,7 +58,7 @@ class Recorder:
             intent: A description of the current task.
         """
         self.current_intent = intent
-        self.intent_timestamp = datetime.datetime.now()
+        self.current_intent = intent
         logger.info(f"Intent set to: {intent}")
 
     def create_snapshot(self, filepath: str):
@@ -78,15 +78,10 @@ class Recorder:
 
             timestamp = datetime.datetime.now().strftime("%H:%M:%S")
 
-            # Check for active intent (TTL 5 minutes).
+            # Check for active intent (Persistent).
             intent_str = ""
-            if self.current_intent and self.intent_timestamp:
-                if (
-                    datetime.datetime.now() - self.intent_timestamp
-                ).total_seconds() < 300:
-                    intent_str = f" - {self.current_intent}"
-                else:
-                    self.current_intent = None  # Expired
+            if self.current_intent:
+                intent_str = f" - {self.current_intent}"
 
             commit_message = (
                 f"[AUTO-TRJ] {timestamp}{intent_str} - Snapshot of {filepath}"

@@ -175,8 +175,8 @@ def checkpoint(intent: str) -> str:
 def set_trajectory_intent(intent: str) -> str:
     """Sets the current coding intent.
 
-    Use this before starting a new task to contextualize "micro-commits".
-    The intent is appended to all [AUTO-TRJ] snapshots for the next 5 minutes.
+    The intent will be attached to all subsequent [AUTO-TRJ] snapshots until it is
+    changed or the server is restarted.
 
     Args:
         intent: A short description of the task (e.g., "Debugging connection timeout").
@@ -189,7 +189,7 @@ def set_trajectory_intent(intent: str) -> str:
         return error
     assert state.recorder is not None
     state.recorder.set_intent(intent)
-    return f"Intent set to: '{intent}' (Valid for 5 minutes)"
+    return f"Intent set to: '{intent}'"
 
 
 def main():

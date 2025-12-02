@@ -28,18 +28,29 @@ def test_create_snapshot(recorder, temp_project_dir):
     assert "Snapshot of" in commits[0].message
     assert "[AUTO-TRJ]" in commits[0].message
 
-def test_intent_recording(recorder, temp_project_dir):
-    """Test that intent is attached to snapshots."""
-    recorder.set_intent("Fixing bug")
+def test_intent_persistence(recorder, temp_project_dir):
+    """Test that intent persists indefinitely."""
+    recorder.set_intent("Persistent Task")
     
-    test_file = os.path.join(temp_project_dir, "test.py")
+    test_file = os.path.join(temp_project_dir, "test.txt")
+    
+    # Snapshot 1
     with open(test_file, "w") as f:
-        f.write("print('bug fixed')")
-        
+        f.write("Change 1")
     recorder.create_snapshot(test_file)
     
-    commits = recorder.get_history(test_file)
-    assert "Fixing bug" in commits[0].message
+    # Simulate time passing (mocking datetime not needed as we removed TTL)
+    # Just verify it's still there for Snapshot 2
+    
+    # Snapshot 2
+    with open(test_file, "a") as f:
+        f.write("Change 2")
+    recorder.create_snapshot(test_file)
+    
+    commits = list(recorder.repo.iter_commits())
+    assert len(commits) == 2
+    assert "Persistent Task" in commits[0].message
+    assert "Persistent Task" in commits[1].message
 
 def test_checkpoint(recorder, temp_project_dir):
     """Test squashing snapshots into a checkpoint."""

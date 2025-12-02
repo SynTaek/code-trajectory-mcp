@@ -119,7 +119,7 @@ The server does **not** auto-configure. You MUST call `configure_project` at the
 As an agent, you should follow this loop to maintain high-quality context:
 
 1.  **Start Task:** When you begin a logical unit of work (e.g., "Implement Login"), call `set_trajectory_intent("Implementing Login")`.
-    *   *Why?* This intent is attached to every auto-snapshot, making the history readable and semantic.
+    *   *Why?* This intent is attached to every auto-snapshot until you change it or restart the server. It makes the history readable and semantic.
 2.  **Work:** Perform your file edits (write_to_file, etc.).
     *   *Behind the scenes:* The server watches your edits and creates `[AUTO-TRJ]` snapshots in the shadow repo.
 3.  **Checkpoint:** When the task is complete (or you reach a stable state), call `checkpoint("Completed Login Implementation")`.

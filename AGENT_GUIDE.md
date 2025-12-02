@@ -54,6 +54,7 @@ You are connected to a "Code Trajectory" server that tracks the evolutionary his
 2.  **INTENT DECLARATION:**
     - Before starting any logical unit of work (e.g., refactoring, fixing a bug), you MUST call `set_trajectory_intent(intent_description)`.
     - Example: `set_trajectory_intent("Refactoring auth middleware to use async/await")`
+    - **Note:** The intent persists until you call this tool again with a new intent.
 
 3.  **CHECKPOINTING (Definition of Done):**
     - When you have successfully completed a task or feature, you MUST call `checkpoint(summary)`.

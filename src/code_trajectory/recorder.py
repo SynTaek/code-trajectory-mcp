@@ -54,6 +54,8 @@ class Recorder:
     def set_intent(self, intent: str):
         """Sets the current coding intent.
 
+        The intent persists until it is explicitly changed or the server is restarted.
+
         Args:
             intent: A description of the current task.
         """

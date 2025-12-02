@@ -36,26 +36,8 @@ def _ensure_configured(path: str | None = None) -> str:
     return f"Server is configured to track: {state.project_path}"
 
 
-def _auto_configure():
-    """Attempts to auto-configure the server using CWD."""
-    cwd = os.getcwd()
-    # Avoid trying to configure if CWD is root or looks suspicious
-    if cwd == "/" or cwd == os.path.abspath(os.sep):
-        logger.info("Current working directory is root. Skipping auto-configuration.")
-        return
-
-    try:
-        _initialize_components(cwd)
-    except Exception as e:
-        logger.warning(f"Auto-configuration failed: {e}")
-
-
 def _check_configured() -> str | None:
     """Checks if configured, returns error message if not."""
-    if state.trajectory is None:
-        # Try one last auto-configure attempt if not set
-        _auto_configure()
-        
     if state.trajectory is None:
         return (
             "Server is NOT configured. "
@@ -96,11 +78,11 @@ def _initialize_components(path: str) -> str:
 def configure_project(path: str) -> str:
     """Configures the server to track a specific project path.
 
-    This tool is used to switch the active project being tracked. The server auto-configures
-    to the current working directory on startup, so this is optional for single-project workflows.
+    This tool MUST be called before using any other tools.
+    It initializes the server to track the specified project directory.
 
     Args:
-        path: Path to the target project directory.
+        path: Absolute path to the target project directory.
 
     Returns:
         A confirmation message indicating the server is configured.
@@ -221,7 +203,7 @@ def main():
         if args.path:
             _initialize_components(args.path)
         else:
-            _auto_configure()
+            logger.info("Server started. Waiting for 'configure_project' call.")
     except Exception as e:
         logger.error(f"Startup configuration failed: {e}")
         # We don't exit here, allowing the server to run.

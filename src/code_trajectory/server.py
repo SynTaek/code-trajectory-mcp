@@ -33,18 +33,35 @@ def _ensure_configured(path: str | None = None) -> str:
     if path:
         return _initialize_components(path)
 
-    if not state.recorder:
-        logger.info(
-            "Server not configured. Attempting to auto-configure with current working directory."
-        )
-        try:
-            return _initialize_components(os.getcwd())
-        except Exception as e:
-            raise RuntimeError(
-                f"Server not configured and auto-configuration failed: {e}. Please call 'configure_project' first."
-            )
-
     return f"Server is configured to track: {state.project_path}"
+
+
+def _auto_configure():
+    """Attempts to auto-configure the server using CWD."""
+    cwd = os.getcwd()
+    # Avoid trying to configure if CWD is root or looks suspicious
+    if cwd == "/" or cwd == os.path.abspath(os.sep):
+        logger.info("Current working directory is root. Skipping auto-configuration.")
+        return
+
+    try:
+        _initialize_components(cwd)
+    except Exception as e:
+        logger.warning(f"Auto-configuration failed: {e}")
+
+
+def _check_configured() -> str | None:
+    """Checks if configured, returns error message if not."""
+    if state.trajectory is None:
+        # Try one last auto-configure attempt if not set
+        _auto_configure()
+        
+    if state.trajectory is None:
+        return (
+            "Server is NOT configured. "
+            "Please call 'configure_project(path=...)' with the absolute path to the project root."
+        )
+    return None
 
 
 def _initialize_components(path: str) -> str:
@@ -88,7 +105,9 @@ def configure_project(path: str) -> str:
     Returns:
         A confirmation message indicating the server is configured.
     """
-    return _ensure_configured(path)
+    if path:
+        return _initialize_components(path)
+    return "Please provide a path."
 
 
 @mcp.tool()
@@ -106,9 +125,9 @@ def get_file_trajectory(filepath: str, depth: int = 5) -> str:
         A markdown-formatted narrative of the file's history, including timestamps,
         intents, and diff summaries. Reverts are annotated with `[Revert Detected]`.
     """
-    _ensure_configured()
-    if state.trajectory is None:
-        raise RuntimeError("Server not configured")
+    error = _check_configured()
+    if error:
+        return error
     return state.trajectory.get_file_trajectory(filepath, depth)
 
 
@@ -125,9 +144,9 @@ def get_global_trajectory(time_window_minutes: int = 30) -> str:
     Returns:
         A summary of modified files and their relationships, grouped by time and intent.
     """
-    _ensure_configured()
-    if state.trajectory is None:
-        raise RuntimeError("Server not configured")
+    error = _check_configured()
+    if error:
+        return error
     return state.trajectory.get_global_trajectory(time_window_minutes)
 
 
@@ -141,9 +160,9 @@ def get_session_summary() -> str:
     Returns:
         A summary of the last recorded session, including the final intent and modified files.
     """
-    _ensure_configured()
-    if state.trajectory is None:
-        raise RuntimeError("Server not configured")
+    error = _check_configured()
+    if error:
+        return error
     return state.trajectory.get_session_summary()
 
 
@@ -160,9 +179,9 @@ def checkpoint(intent: str) -> str:
     Returns:
         A success message indicating the checkpoint was created and how many snapshots were squashed.
     """
-    _ensure_configured()
-    if state.recorder is None:
-        raise RuntimeError("Server not configured")
+    error = _check_configured()
+    if error:
+        return error
     return state.recorder.checkpoint(intent)
 
 
@@ -179,9 +198,9 @@ def set_trajectory_intent(intent: str) -> str:
     Returns:
         A confirmation message indicating the intent is set.
     """
-    _ensure_configured()
-    if state.recorder is None:
-        raise RuntimeError("Server not configured")
+    error = _check_configured()
+    if error:
+        return error
     state.recorder.set_intent(intent)
     return f"Intent set to: '{intent}' (Valid for 5 minutes)"
 
@@ -200,12 +219,9 @@ def main():
             raise RuntimeError("Git is not installed or not in PATH.")
 
         if args.path:
-            _ensure_configured(args.path)
+            _initialize_components(args.path)
         else:
-            logger.info(
-                "No path provided, auto-configuring to current working directory."
-            )
-            _ensure_configured(os.getcwd())
+            _auto_configure()
     except Exception as e:
         logger.error(f"Startup configuration failed: {e}")
         # We don't exit here, allowing the server to run.

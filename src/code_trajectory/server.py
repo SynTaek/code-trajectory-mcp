@@ -298,6 +298,13 @@ def main():
                 errors=sys.stdin.errors,
                 line_buffering=sys.stdin.line_buffering
             )
+            logger.info("Windows CRLF fix applied: wrapped sys.stdin.buffer")
+            sys.stderr.write("DEBUG: Code Trajectory Server with Windows CRLF fix started.\n")
+            sys.stderr.flush()
+        else:
+            logger.warning("sys.stdin has no buffer attribute, cannot apply CRLF fix.")
+            sys.stderr.write("DEBUG: sys.stdin has no buffer, fix NOT applied.\n")
+            sys.stderr.flush()
         
         mcp.run()
     except KeyboardInterrupt:

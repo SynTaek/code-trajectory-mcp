@@ -205,6 +205,10 @@ def set_trajectory_intent(intent: str) -> str:
 
 
 
+    def __getattr__(self, name):
+        return getattr(self.buffer, name)
+
+
 class BytesStdinWrapper:
     """
     Wraps stdin.buffer to ensure consistent line endings (LF) across platforms.
@@ -237,6 +241,7 @@ class BytesStdinWrapper:
     def __iter__(self):
         for line in self.buffer:
             yield line.replace(b'\r', b'')
+
 
     def flush(self):
         self.buffer.flush()

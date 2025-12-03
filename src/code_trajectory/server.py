@@ -203,6 +203,55 @@ def set_trajectory_intent(intent: str) -> str:
     return f"Intent set to: '{intent}'"
 
 
+
+
+class BytesStdinWrapper:
+    """
+    Wraps stdin.buffer to ensure consistent line endings (LF) across platforms.
+    Specifically removes b'\r' characters that can cause issues with JSON parsing on Windows.
+    """
+    def __init__(self, buffer):
+        self.buffer = buffer
+
+    def read(self, size=-1):
+        # Read from buffer and remove b'\r'
+        chunk = self.buffer.read(size)
+        if chunk:
+            return chunk.replace(b'\r', b'')
+        return chunk
+    
+    def read1(self, size=-1):
+        # Read from buffer and remove b'\r'
+        chunk = self.buffer.read1(size)
+        if chunk:
+            return chunk.replace(b'\r', b'')
+        return chunk
+
+    def readline(self, size=-1):
+        # Read line and remove b'\r'
+        line = self.buffer.readline(size)
+        if line:
+            return line.replace(b'\r', b'')
+        return line
+
+    def __iter__(self):
+        for line in self.buffer:
+            yield line.replace(b'\r', b'')
+
+    def flush(self):
+        self.buffer.flush()
+    
+    def close(self):
+        self.buffer.close()
+    
+    @property
+    def closed(self):
+        return self.buffer.closed
+
+    def __getattr__(self, name):
+        return getattr(self.buffer, name)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Code Trajectory MCP Server")
     parser.add_argument("--path", help="Path to the target project to track (optional)")
@@ -227,6 +276,24 @@ def main():
 
     # Run server
     try:
+        # Wrap stdin.buffer to sanitize input (remove \r) for Windows compatibility
+        import sys
+        import io
+        
+        # We need to ensure we are wrapping the underlying buffer
+        if hasattr(sys.stdin, 'buffer'):
+            # Create a wrapper around the original buffer
+            wrapped_buffer = BytesStdinWrapper(sys.stdin.buffer)
+            # Replace sys.stdin with a new TextIOWrapper using our wrapped buffer
+            # This ensures that both direct buffer access (via sys.stdin.buffer) 
+            # and text access (via sys.stdin) use our sanitizer.
+            sys.stdin = io.TextIOWrapper(
+                wrapped_buffer, 
+                encoding=sys.stdin.encoding, 
+                errors=sys.stdin.errors,
+                line_buffering=sys.stdin.line_buffering
+            )
+        
         mcp.run()
     except KeyboardInterrupt:
         logger.info("Stopping server...")

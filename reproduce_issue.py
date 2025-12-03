@@ -1,3 +1,18 @@
+# Root Cause Analysis
+# The issue was a bidirectional CRLF incompatibility between Windows Python and the MCP Client (Antigravity/Claude).
+
+# Input (Client -> Server): Windows terminals send \r\n (CRLF) as a newline. The MCP server's JSON parser choked on the \r character, causing the initial "invalid trailing data" error.
+# Output (Server -> Client): Even after fixing the input, the server (running on Windows) was printing \r\n to stdout by default. The MCP Client also choked on the \r in the response, causing the same error message to persist.
+# Comparison with main branch: The main branch uses standard sys.stdin and sys.stdout, which on Windows automatically translate \n to \r\n. The fix intercepts both streams at the binary buffer level to enforce Unix-style \n (LF) only, ensuring compatibility regardless of the platform.
+
+# Cleanup & Integration
+# I have:
+
+# Updated tests/test_windows_compat.py to include regression tests for both Input (stripping \r) and Output (enforcing \n).
+# Deleted all temporary reproduction scripts (reproduce_issue.py, test_anyio.py, etc.).
+# Pushed the final clean code to the fix/windows-crlf-issue branch.
+# You can now merge this branch into main.
+
 import subprocess
 import sys
 import json

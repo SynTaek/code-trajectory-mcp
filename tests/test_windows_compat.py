@@ -67,6 +67,22 @@ def test_stdin_wrapper_logic():
     lines = list(wrapper)
     assert lines == [b'line1\n', b'line2\n']
 
+def test_stdout_wrapper_logic():
+    """
+    Directly tests the BytesStdoutWrapper logic to ensure it replaces b'\\r\\n' with b'\\n'.
+    """
+    from code_trajectory.server import BytesStdoutWrapper
+    
+    mock_buffer = io.BytesIO()
+    wrapper = BytesStdoutWrapper(mock_buffer)
+    
+    # Write content with CRLF
+    wrapper.write(b'{"jsonrpc": "2.0"}\r\n')
+    
+    # Verify buffer content has LF only
+    assert mock_buffer.getvalue() == b'{"jsonrpc": "2.0"}\n'
+
+
 
 if __name__ == "__main__":
     # Manually run if needed

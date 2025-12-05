@@ -4,6 +4,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from threading import Timer
 from .recorder import Recorder
+from . import path_utils
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class DebouncedEventHandler(FileSystemEventHandler):
 
         filepath = event.src_path
         # Ignore .git directory.
-        if ".git" in filepath:
+        if path_utils.is_git_directory(filepath):
             return
 
         # Check if ignored by git.

@@ -4,6 +4,7 @@ import logging
 import os
 
 from .recorder import Recorder
+from . import path_utils
 
 logger = logging.getLogger(__name__)
 
@@ -29,13 +30,17 @@ class Trajectory:
         trajectory = [f"# Trajectory for {filepath}"]
 
         # Normalize filepath for tree access (must be relative to project root).
+        # We need a POSIX path for git tree traversal.
         if os.path.isabs(filepath):
             try:
-                rel_filepath = os.path.relpath(filepath, self.recorder.project_root)
+                rel_filepath = path_utils.get_relative_path(filepath, self.recorder.project_root)
             except ValueError:
                 rel_filepath = filepath  # Fallback
         else:
             rel_filepath = filepath
+
+        # Ensure it is posix style for git
+        rel_filepath = path_utils.to_posix_path(rel_filepath)
 
         # Track content hashes to detect reverts.
         # Map: content_hash -> (timestamp, message)

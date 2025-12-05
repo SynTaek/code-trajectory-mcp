@@ -12,7 +12,8 @@ def test_explicit_configuration(temp_project_dir):
 
     result = configure_project(temp_project_dir)
     
-    assert "Successfully configured" in result
+    # Check for either success message (existing) or new init message
+    assert "Successfully configured" in result or "New project initialized" in result
     assert state.project_path == temp_project_dir
     assert state.recorder is not None
     assert state.recorder.project_root == temp_project_dir
@@ -47,7 +48,7 @@ def test_reconfiguration(temp_project_dir):
         # Configure second project
         result = configure_project(second_dir)
         
-        assert "Successfully configured" in result
+        assert "Successfully configured" in result or "New project initialized" in result
         assert state.project_path == second_dir
         assert state.watcher != old_watcher
         

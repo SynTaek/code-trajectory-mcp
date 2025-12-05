@@ -126,6 +126,20 @@ class Trajectory:
                 commits = list(self.recorder.repo.iter_commits(max_count=limit))
 
         except Exception as e:
+            # Check for empty repo error (gitpython usually raises ValueError or GitCommandError)
+            error_msg = str(e)
+            # More specific checks for empty repository states
+            if "Reference at 'refs/heads/master' does not exist" in error_msg:
+                 return "No history available"
+
+            # Check for GitCommandError that indicates no commits (git log fails)
+            if hasattr(e, 'stderr') and "does not have any commits yet" in str(e.stderr):
+                 return "No history available"
+
+            # Check for BadObject (happens when HEAD is invalid)
+            if "BadObject" in error_msg and "HEAD" in error_msg:
+                 return "No history available"
+
             logger.error(f"Failed to fetch global trajectory: {e}")
             return f"Error fetching global trajectory: {e}"
 
@@ -166,6 +180,10 @@ class Trajectory:
             
             timestamps = [int(ts) for ts in timestamps_output.splitlines()]
         except Exception as e:
+            error_msg = str(e)
+            if "does not have any commits yet" in error_msg:
+                return "No history available"
+
             logger.error(f"Failed to fetch commit timestamps: {e}")
             return f"Error analyzing session history: {e}"
 

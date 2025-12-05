@@ -6,6 +6,7 @@ import os
 from .recorder import Recorder
 from .watcher import Watcher
 from .trajectory import Trajectory
+from . import path_utils
 
 # Configure logging
 logging.basicConfig(
@@ -47,7 +48,7 @@ def _check_configured() -> str | None:
 
 
 def _initialize_components(path: str) -> str:
-    target_path = os.path.abspath(path)
+    target_path = path_utils.normalize_path(path)
     if not os.path.exists(target_path):
         raise ValueError(f"Target path does not exist: {target_path}")
 

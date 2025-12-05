@@ -65,6 +65,9 @@ def _initialize_components(path: str) -> str:
     if state.watcher:
         state.watcher.stop()
 
+    # Check if this is a new initialization before creating the recorder (which creates the repo)
+    is_new_initialization = not os.path.exists(shadow_repo_path)
+
     try:
         state.recorder = Recorder(target_path)
         state.watcher = Watcher(target_path, state.recorder)
@@ -73,6 +76,12 @@ def _initialize_components(path: str) -> str:
 
         state.watcher.start()
         logger.info(f"Initialized components for {target_path}")
+
+        if is_new_initialization:
+            return (
+                "New project initialized. No history available yet. "
+                "Do NOT call get_session_summary."
+            )
         return f"Successfully configured to track: {target_path}"
     except Exception as e:
         logger.error(f"Failed to initialize components: {e}")

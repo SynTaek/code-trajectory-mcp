@@ -5,13 +5,14 @@ import datetime
 import logging
 import os
 from typing import Optional
+from . import path_utils
 
 logger = logging.getLogger(__name__)
 
 
 class Recorder:
     def __init__(self, repo_path: str):
-        self.project_root = os.path.abspath(repo_path)
+        self.project_root = path_utils.normalize_path(repo_path)
         self.shadow_repo_path = os.path.join(self.project_root, ".trajectory")
         self.current_intent: Optional[str] = None
         self.current_intent: Optional[str] = None
@@ -116,8 +117,10 @@ class Recorder:
         else:
             abs_path = filepath
 
+        abs_path = path_utils.normalize_path(abs_path)
+
         # Check if path is within project root
-        if not abs_path.startswith(self.project_root):
+        if not path_utils.is_subpath(abs_path, self.project_root):
             logger.error(
                 f"Path {filepath} is not within project root {self.project_root}"
             )
